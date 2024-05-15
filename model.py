@@ -19,9 +19,9 @@ class LayoutLM_QA_Model:
     def updateImage(self, image_path):
         self.image_path = image_path
         self.preproc_img_arr = self.preprocessor.process_image_for_ocr(image_path)
+        self.words, self.bboxes = self.ocr.perform_ocr(self.preproc_img_arr)
 
     def answer_question(self, question):
-
         encoding = self.tokenizer(
             question.split(), self.words, is_split_into_words=True, return_token_type_ids=True, return_tensors="pt"
         )
