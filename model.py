@@ -14,7 +14,7 @@ class LayoutLM_QA_Model:
         assert len(self.words) == len(self.bboxes)
 
         self.tokenizer = AutoTokenizer.from_pretrained("impira/layoutlm-document-qa", add_prefix_space=True)
-        self.model = LayoutLMForQuestionAnswering.from_pretrained("impira/layoutlm-document-qa", revision="1e3ebac")
+        self.model = LayoutLMForQuestionAnswering.from_pretrained("impira/layoutlm-document-qa")
 
     def updateImage(self, image_path):
         self.image_path = image_path
