@@ -85,7 +85,8 @@ def process():
         elif model_type == 'layoutlmv2':
             return jsonify({"result": "LayoutLMv2 results"})
         elif model_type == 'ocr':
-            text = pytesseract.image_to_string(uploaded_file)
+            img = Image.open(uploaded_file)
+            text = pytesseract.image_to_string(img)
             return jsonify({"result": text})
         else:
             print("Invalid model type")
