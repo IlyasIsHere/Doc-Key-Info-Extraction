@@ -3,23 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Understanding : Textual Information Extraction 1.0</title>
+    <title>Document Understanding: Textual Information Extraction 1.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.1.3/darkly/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        #exportButtons {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e1e;
+        }
+        header {
+            background-color: #282828;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1, header h2 {
+            margin: 0;
+            color: #f8f9fa;
+        }
+        form {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 5px;
+            position: relative;
+            animation: borderAnimation 2s linear infinite;
+            border-width: 1px;
+            border-style: solid;
+        }
+        @keyframes borderAnimation {
+            0% { border-color: red; }
+            33% { border-color: orange; }
+            66% { border-color: yellow; }
+            100% { border-color: red; }
+        }
+        .form-label {
+            color: #f8f9fa;
         }
         #responseCode {
             background-color: #2d2d2d;
             color: #f8f9fa;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             max-height: 300px;
             overflow-y: auto;
@@ -37,7 +62,6 @@
         #response {
             position: relative;
         }
-        /* Custom scrollbar styles */
         #responseCode::-webkit-scrollbar {
             width: 12px;
         }
@@ -50,13 +74,47 @@
             border-radius: 5px;
             border: 3px solid #2d2d2d;
         }
+        #exportButtons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .loading-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+        }
+        .loading-indicator img {
+            width: 50px;
+            height: 50px;
+        }
+        .loading-indicator span {
+            color: #f8f9fa;
+            margin-top: 10px;
+            font-size: 1.2em;
+        }
+        .box {
+            animation: moveUp 1s infinite alternate;
+          }
+          @keyframes moveUp {
+            0% {
+              transform: translateY(0);
+            }
+            100% {
+              transform: translateY(-5px); /* Change this value to adjust the distance of translation */
+            }
+          }
     </style>
 </head>
 <body>
     <div class="container mt-5">
         <header class="mb-4">
-            <h1 class="text-center">Document Understanding </h1>
-            <h2 class="text-center">Textual Information Extraction App v1.0</h2>
+            <h1>Document Understanding</h1>
+            <h2>Textual Information Extraction App v1.0</h2>
         </header>
         <h3 class="mb-4">Upload Document</h3>
         <form id="ocrForm" enctype="multipart/form-data">
@@ -90,15 +148,22 @@
                     <label class="form-check-label" for="infoProtection">Enable Information Protection</label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-danger">Submit</button>
         </form>
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="box">
+                <i class="fa-solid fa-fire"></i>
+            </div>
+
+            <span>Cooking answer...</span>
+        </div>
         <div id="response" class="mt-4" style="display: none;">
-            <pre><code id="responseCode" class="hljs"></code></pre>
+            <pre><code id="responseCode" class="language-html"></code></pre>
             <button id="copyButton"><i class="fas fa-copy"></i></button>
         </div>
-        <div id="exportButtons" class="mt-4">
-            <button type="button" class="btn btn-success" id="exportTxtBtn">Export as TXT</button>
-            <button type="button" class="btn btn-warning" id="exportJsonBtn">Export as JSON</button>
+        <div id="exportButtons" class="mt-4 mb-4">
+            <button type="button" class="btn btn-warning" id="exportTxtBtn">Export as TXT</button>
+            <button type="button" class="btn btn-success" id="exportJsonBtn">Export as JSON</button>
         </div>
     </div>
 
@@ -121,11 +186,18 @@
         document.getElementById('ocrForm').addEventListener('submit', function(event) {
             event.preventDefault();
             var formData = new FormData(this);
+            var loadingIndicator = document.getElementById('loadingIndicator');
+            var responseSection = document.getElementById('response');
+
+            loadingIndicator.style.display = 'flex';
+            responseSection.style.display = 'none';
+
             fetch('http://127.0.0.1:5000/process', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
+                loadingIndicator.style.display = 'none';
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
@@ -133,8 +205,8 @@
             })
             .then(data => {
                 console.log(data);
-                document.getElementById('responseCode').innerText = data.result;
-                document.getElementById('response').style.display = 'block';
+                document.getElementById('responseCode').innerText = JSON.stringify(data.result, null, 2);
+                responseSection.style.display = 'block';
                 document.getElementById('exportTxtBtn').addEventListener('click', function() {
                     exportResults(data.result, 'txt');
                 });
@@ -146,12 +218,12 @@
             .catch(error => {
                 console.error('Error:', error);
                 document.getElementById('responseCode').innerText = 'Error: ' + error.message;
-                document.getElementById('response').style.display = 'block';
+                responseSection.style.display = 'block';
                 hljs.highlightElement(document.getElementById('responseCode'));
             });
         });
 
-        document.getElementById('response').addEventListener('click', function() {
+        document.getElementById('copyButton').addEventListener('click', function() {
             var codeContent = document.getElementById('responseCode').innerText;
             navigator.clipboard.writeText(codeContent).then(function() {
                 alert('Code copied to clipboard');

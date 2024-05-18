@@ -1,0 +1,19 @@
+what is the type of the document?
+when was the document created?
+who is the author of the document?
+what is the title of the document?
+what is the subject of the document?
+what is the recipient of the document?
+what is the content of the document?
+is there an identifier of the document?
+what is the total amount in the document?
+what is the subtotal amount in the document?
+what is the tax amount in the document?
+what is the tax percentage in the document?
+what is the discount percentage in the document?
+what are the items brought in the document?
+are there any notes in the end of the document?
+what are the email addresses in the document?
+are there any phone numbers in the document?
+are there any URLs in the document?
+are there any addresses in the document?

@@ -2,13 +2,17 @@ from flask import Flask, request, jsonify, send_file, render_template
 import os
 from PIL import Image
 import model
+import pytesseract
+import llm 
 
 app = Flask(__name__)
 
 from transformers import pipeline
 
 pipe = pipeline("document-question-answering", model="impira/layoutlm-document-qa")
-print(pipe(image='images/Template1_Instance0.jpg', question="what is the address?"))
+questions=open("fields.txt", "r")
+questions=[question.strip() for question in questions]
+print(questions)
 
 def save_image(image, filename):
     input_folder = "input"
@@ -33,7 +37,6 @@ def index():
 
 
 
-@app.route('/ocr', methods=['POST'])
 def ocr():
     uploaded_file = request.files['file']
     model_type = request.form.get('model', 'gemini')
@@ -53,30 +56,42 @@ def process():
     prompt = request.form.get('prompt', None)
     model_type = request.form.get('model', 'gemini')
     print("Model type: ", model_type)
-    
     if uploaded_file and uploaded_file.filename != '':
         if model_type == 'gemini':
-            try:
-                image = Image.open(uploaded_file)
-                image_path = save_image(image, uploaded_file.filename)
-                processed_data = model.process(image, prompt=prompt)
-                return jsonify({"result": processed_data})
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
+            image = Image.open(uploaded_file)
+            image_path = save_image(image, uploaded_file.filename)
+            processed_data = llm.process(image, prompt=prompt)
+            return jsonify({"result": processed_data})
         elif model_type == 'layoutlmv1':
             image=Image.open(uploaded_file)
             image_path=save_image(image, uploaded_file.filename)
             print(image_path)
-            result=pipe(image=image_path, 
-                        question=prompt)
-            result=result[0]['answer']
-            return jsonify({"result": result})
+            print(prompt)
+            if prompt is None or prompt=="":
+                answer={}
+                for question in questions:
+                    print(question)
+                    result=pipe(image=image_path, 
+                                question=question)
+                    result=result[0]['answer']
+                    answer[question]=result
+                    print(answer)
+                return jsonify({"result": str(answer)})
+            else:
+                result=pipe(image=image_path, 
+                            question=prompt)
+                result=result[0]['answer']
+                return jsonify({"result": result})
         elif model_type == 'layoutlmv2':
-            #model 2= a;sdjf
             return jsonify({"result": "LayoutLMv2 results"})
+        elif model_type == 'ocr':
+            text = pytesseract.image_to_string(uploaded_file)
+            return jsonify({"result": text})
         else:
+            print("Invalid model type")
             return jsonify({"error": "Invalid model type"})
     else:
+        print("No file uploaded")
         return jsonify({"error": "No file uploaded"}), 400
 
 
